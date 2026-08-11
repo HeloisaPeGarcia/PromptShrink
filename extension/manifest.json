@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "PromptShrink — AI Prompt Optimizer",
+  "version": "0.2.0",
+  "description": "Reduza tokens e economize dinheiro otimizando prompts diretamente no ChatGPT, Claude, Gemini e Poe.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*",
+    "https://claude.ai/*",
+    "https://aistudio.google.com/*",
+    "https://poe.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "PromptShrink Settings"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.openai.com/*",
+        "https://chatgpt.com/*",
+        "https://claude.ai/*",
+        "https://aistudio.google.com/*",
+        "https://poe.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ]
+}

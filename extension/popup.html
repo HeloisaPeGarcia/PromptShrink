@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>PromptShrink</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-card">
+    <div class="popup-header">
+      <div class="logo-title">
+        <span class="logo-icon">🗜️</span>
+        <div>
+          <h2>PromptShrink</h2>
+          <span class="version">v0.2.0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-box">
+      <div class="stat-item">
+        <span class="stat-num" id="statTokens">0</span>
+        <span class="stat-label">Tokens Salvos</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" id="statCost">$0.00</span>
+        <span class="stat-label">Economizado</span>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <label class="setting-label">Nível de Compressão</label>
+      <select id="selectLevel" class="input-select">
+        <option value="light">Light (Cortesias)</option>
+        <option value="moderate" selected>Moderate (Recomendado)</option>
+        <option value="aggressive">Aggressive (Máximo)</option>
+      </select>
+
+      <label class="toggle-container">
+        <span>Mascara de PII (CPF/Email)</span>
+        <input type="checkbox" id="togglePii">
+        <span class="slider"></span>
+      </label>
+
+      <label class="toggle-container">
+        <span>Remover Emojis Decorativos</span>
+        <input type="checkbox" id="toggleEmojis">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="popup-footer">
+      <span class="status-indicator online">● API Conectada</span>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
