@@ -1,5 +1,5 @@
 """
-FastAPI application — PromptShrink API (v1 + legacy endpoints).
+FastAPI application — PromptShrink API (v1 + legacy endpoints + Web Dashboard).
 """
 
 from __future__ import annotations
@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes.optimize import router as optimize_router, legacy_router
 from api.routes.health import router as health_router
+from api.routes.dashboard import router as dashboard_router
 
 app = FastAPI(
     title="PromptShrink API",
@@ -29,3 +30,4 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(optimize_router)
 app.include_router(legacy_router)
+app.include_router(dashboard_router)

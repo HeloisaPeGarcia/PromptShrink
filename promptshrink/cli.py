@@ -4,7 +4,8 @@ CLI do PromptShrink — interface de console com Rich e Typer.
 Uso:
     promptshrink optimize --model gpt-4o --level moderate
     echo "meu prompt" | promptshrink optimize --model gpt-4o
-    promptshrink optimize --from-file prompt.txt --json
+    promptshrink repo --path ./src --save-to-file context.txt
+    promptshrink calc --calls 100000 --model gpt-4o
     promptshrink models
 """
 
@@ -27,6 +28,8 @@ from promptshrink.optimizer import optimize
 from promptshrink.cost_estimator import list_models
 from promptshrink.diff import render_diff
 from promptshrink.compressibility import analyze_compressibility
+from promptshrink.repo_shrinker import shrink_codebase
+from promptshrink.calc_simulator import simulate_monthly_savings
 
 app = typer.Typer(
     name="promptshrink",
@@ -40,7 +43,6 @@ err_console = Console(stderr=True)
 
 
 def _read_input(from_file: Optional[Path]) -> str:
-    """Lê o texto do prompt de arquivo ou stdin."""
     if from_file:
         if not from_file.exists():
             err_console.print(f"[red]Erro:[/red] arquivo não encontrado: {from_file}")
@@ -65,7 +67,6 @@ def _read_input(from_file: Optional[Path]) -> str:
 
 
 def _copy_to_clipboard(text: str) -> bool:
-    """Tenta copiar texto para a área de transferência."""
     try:
         import pyperclip  # type: ignore
         pyperclip.copy(text)
@@ -153,23 +154,13 @@ def cmd_optimize(
 
     semantic = not no_semantic
 
-    if not output_json:
-        with console.status("[bold cyan]Otimizando prompt…[/bold cyan]"):
-            result = optimize(
-                text=text,
-                model=model,
-                level=level,
-                semantic=semantic,
-                strip_emojis=strip_emojis,
-            )
-    else:
-        result = optimize(
-            text=text,
-            model=model,
-            level=level,
-            semantic=semantic,
-            strip_emojis=strip_emojis,
-        )
+    result = optimize(
+        text=text,
+        model=model,
+        level=level,
+        semantic=semantic,
+        strip_emojis=strip_emojis,
+    )
 
     final_text = result.optimized_text
     if apply_language and result.language_advice and result.language_advice.english_instruction_prompt:
@@ -214,15 +205,60 @@ def cmd_optimize(
             if copied:
                 console.print("[green]✓[/green] Copiado para a área de transferência!")
             else:
-                console.print(
-                    "[yellow]⚠[/yellow] Clipboard indisponível. "
-                    "Texto otimizado abaixo:\n"
-                )
                 print(final_text)
         else:
             print(final_text)
     else:
         console.print("[dim]Prompt original mantido.[/dim]")
+
+
+@app.command("repo")
+def cmd_repo(
+    path: Path = typer.Option(Path("."), "--path", "-p", help="Caminho do repositório/diretório"),
+    save_to_file: Optional[Path] = typer.Option(None, "--save-to-file", "-s", help="Salvar contexto em arquivo"),
+) -> None:
+    """
+    [bold cyan]Pacote de Repositório[/bold cyan] — varre e minifica um repositório inteiro para LLMs.
+    """
+    with console.status("[bold cyan]Varrendo e minificando repositório…[/bold cyan]"):
+        res = shrink_codebase(dir_path=path, output_path=save_to_file)
+
+    console.print(Panel(
+        f"[bold green]Arquivos Processados:[/bold green] {res['files_processed']}\n"
+        f"[bold cyan]Tamanho Original:[/bold cyan] {res['total_orig_bytes'] / 1024:.1f} KB\n"
+        f"[bold green]Tamanho Otimizado:[/bold green] {res['total_opt_bytes'] / 1024:.1f} KB\n"
+        f"[bold yellow]Economia:[/bold yellow] -{res['bytes_saved'] / 1024:.1f} KB (-{res['percent_saved']}%)",
+        title="📂 Codebase Context Shrinker",
+        border_style="green"
+    ))
+
+    if not save_to_file and not sys.stdin.isatty():
+        print(res["payload"])
+
+
+@app.command("calc")
+def cmd_calc(
+    calls: int = typer.Option(100000, "--calls", "-c", help="Chamadas mensais de API"),
+    tokens: int = typer.Option(800, "--tokens", "-t", help="Tokens de input médios por chamada"),
+    model: str = typer.Option("gpt-4o", "--model", "-m", help="Modelo utilizado"),
+) -> None:
+    """
+    [bold cyan]Calculadora & Simulador de ROI[/bold cyan] — simula economia mensal de custos de LLM.
+    """
+    res = simulate_monthly_savings(calls_per_month=calls, avg_input_tokens=tokens, model=model)
+
+    table = Table(title="💰 Simulação de Economia Mensal", box=box.ROUNDED)
+    table.add_column("Métrica", style="cyan")
+    table.add_column("Valor Sem Otimização", justify="right", style="yellow")
+    table.add_column("Valor com PromptShrink", justify="right", style="green")
+
+    table.add_row("Chamadas/Mês", f"{calls:,}", f"{calls:,}")
+    table.add_row("Tokens Input Médios", f"{tokens}", f"{res['avg_input_tokens_opt']}")
+    table.add_row("Custo Mensal USD", f"${res['monthly_cost_orig_usd']:.2f}", f"${res['monthly_cost_opt_usd']:.2f}")
+    table.add_row("Economia Mensal USD", "$0.00", f"[bold green]${res['monthly_savings_usd']:.2f} (-{res['savings_percent']}%)[/bold green]")
+    table.add_row(f"Com Model Router ({res['suggested_cheaper_model']})", "-", f"[bold green]${res['monthly_savings_with_router_usd']:.2f}[/bold green]")
+
+    console.print(table)
 
 
 @app.command("models")
