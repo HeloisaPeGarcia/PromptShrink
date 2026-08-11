@@ -56,7 +56,8 @@ _DECORATIVE_EMOJI_PATTERN = re.compile(
     r"\U0001f900-\U0001f9ff"
     r"\U0001fa00-\U0001fa6f"
     r"\U0001fa70-\U0001faff"
-    r"\u24c2-\u1f251"
+    r"\U0001f100-\U0001f251"
+    r"\u24c2"
     r"]+",
     flags=re.UNICODE,
 )
@@ -157,7 +158,6 @@ def sanitize(text: str, strip_emojis: bool = False) -> SanitizeResult:
     """
     Executa o pipeline completo de sanitização determinística com proteção de código.
     """
-    # Protege blocos de código
     protected_text, code_blocks = protect_code_blocks(text)
     current = protected_text
     applied: list[str] = []
@@ -180,7 +180,6 @@ def sanitize(text: str, strip_emojis: bool = False) -> SanitizeResult:
             applied.append(name)
         current = result
 
-    # Restaura blocos de código
     sanitized_final = restore_code_blocks(current, code_blocks)
 
     return SanitizeResult(original=text, sanitized=sanitized_final, rules_applied=applied)
