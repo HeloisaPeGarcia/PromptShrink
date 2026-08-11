@@ -1,0 +1,73 @@
+name: PromptGuard — PR Audit & Token Optimizer
+
+on:
+  pull_request:
+    paths:
+      - 'prompts/**'
+      - '**/*.prompt'
+      - '**/*.prompt.md'
+
+jobs:
+  audit-prompts:
+    name: Audit Prompts for PII, Injections & Token Waste
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PromptShrink
+        run: |
+          pip install -e .
+
+      - name: Audit Prompt Files
+        id: audit
+        run: |
+          python -c '
+          import os, glob, sys
+          from promptshrink.pii_detector import mask_pii
+          from promptshrink.injection_detector import check_prompt_injection
+          from promptshrink.optimizer import optimize
+
+          prompt_files = glob.glob("prompts/**/*.*", recursive=True) + glob.glob("**/*.prompt*", recursive=True)
+          if not prompt_files:
+              print("Nenhum arquivo de prompt encontrado.")
+              sys.exit(0)
+
+          pii_failures = []
+          injection_warnings = []
+          total_saved_tokens = 0
+
+          for fpath in prompt_files:
+              if os.path.isdir(fpath): continue
+              with open(fpath, "r", encoding="utf-8") as f:
+                  content = f.read()
+
+              # 1. PII Check
+              pii_res = mask_pii(content)
+              if pii_res.pii_found_count > 0:
+                  pii_failures.append((fpath, pii_res.pii_found_count))
+
+              # 2. Injection Check
+              inj_res = check_prompt_injection(content)
+              if inj_res.risk_level in ("MEDIUM", "HIGH"):
+                  injection_warnings.append((fpath, inj_res.risk_level, inj_res.detected_threats))
+
+              # 3. Token Savings
+              opt_res = optimize(content, model="gpt-4o")
+              total_saved_tokens += opt_res.metrics.tokens_saved
+
+          if pii_failures:
+              print(f"::error::Vazamento de PII detectado nos arquivos: {pii_failures}")
+              sys.exit(1)
+
+          if injection_warnings:
+              print(f"::warning::Aviso de risco de Prompt Injection: {injection_warnings}")
+
+          print(f"Potencial de economia total nos prompts do PR: {total_saved_tokens} tokens")
+          '

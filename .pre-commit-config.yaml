@@ -1,0 +1,11 @@
+# Configuração de Pre-commit Hook do PromptShrink
+# Instalação: pre-commit install
+repos:
+  - repo: local
+    hooks:
+      - id: promptshrink-pii-guard
+        name: PromptShrink — Bloquear Vazamento de PII em Prompts
+        entry: python -c "import sys, glob; from promptshrink.pii_detector import mask_pii; files=[f for f in sys.argv[1:] if f.endswith(('.txt','.prompt','.md'))]; [sys.exit(1) for f in files if mask_pii(open(f,encoding='utf-8').read()).pii_found_count > 0]"
+        language: system
+        types: [file]
+        files: ^prompts/.*$
