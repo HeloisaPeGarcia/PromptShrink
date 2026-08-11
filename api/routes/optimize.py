@@ -1,6 +1,6 @@
 """
 Endpoints principais de otimização:
-- POST /v1/optimize
+- POST /v1/optimize (e alias /optimize)
 - POST /v1/chat/compress
 - POST /v1/pii/mask
 - POST /v1/injection/check
@@ -24,6 +24,7 @@ from promptshrink.injection_detector import check_prompt_injection
 from promptshrink.compressibility import analyze_compressibility
 
 router = APIRouter(prefix="/v1", tags=["optimization"])
+legacy_router = APIRouter(tags=["optimization"])
 
 
 # ---------------------------------------------------------------------------
@@ -129,11 +130,7 @@ class CompressibilityRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-@router.post("/optimize", response_model=OptimizeResponse)
-async def optimize_endpoint(req: OptimizeRequest) -> OptimizeResponse:
-    """
-    Otimiza um prompt de IA com técnicas determinísticas e Engenharia de LLM.
-    """
+async def _run_optimization(req: OptimizeRequest) -> OptimizeResponse:
     try:
         input_text = req.text
         pii_map = None
@@ -175,11 +172,18 @@ async def optimize_endpoint(req: OptimizeRequest) -> OptimizeResponse:
     )
 
 
+@router.post("/optimize", response_model=OptimizeResponse)
+async def optimize_endpoint(req: OptimizeRequest) -> OptimizeResponse:
+    return await _run_optimization(req)
+
+
+@legacy_router.post("/optimize", response_model=OptimizeResponse, include_in_schema=False)
+async def optimize_legacy_endpoint(req: OptimizeRequest) -> OptimizeResponse:
+    return await _run_optimization(req)
+
+
 @router.post("/chat/compress", response_model=ChatCompressResponse)
 async def compress_chat_endpoint(req: ChatCompressRequest) -> ChatCompressResponse:
-    """
-    Comprime um histórico de mensagens de chat preservando as N últimas mensagens intactas.
-    """
     try:
         res = compress_chat_history(
             messages=req.messages,
@@ -194,9 +198,6 @@ async def compress_chat_endpoint(req: ChatCompressRequest) -> ChatCompressRespon
 
 @router.post("/pii/mask", response_model=PIIMaskResponse)
 async def mask_pii_endpoint(req: PIIMaskRequest) -> PIIMaskResponse:
-    """
-    Mascara dados de PII (CPF, E-mail, Telefone, CNPJ, Cartão).
-    """
     res = mask_pii(req.text)
     return PIIMaskResponse(
         masked_text=res.text,
@@ -207,9 +208,6 @@ async def mask_pii_endpoint(req: PIIMaskRequest) -> PIIMaskResponse:
 
 @router.post("/injection/check", response_model=InjectionCheckResponse)
 async def check_injection_endpoint(req: InjectionCheckRequest) -> InjectionCheckResponse:
-    """
-    Avalia riscos de Prompt Injection no texto.
-    """
     res = check_prompt_injection(req.text)
     return InjectionCheckResponse(
         risk_score=res.risk_score,
@@ -220,17 +218,11 @@ async def check_injection_endpoint(req: InjectionCheckRequest) -> InjectionCheck
 
 @router.post("/compressibility")
 async def check_compressibility_endpoint(req: CompressibilityRequest) -> dict[str, Any]:
-    """
-    Retorna pré-análise rápida do potencial de compressão do prompt.
-    """
     return analyze_compressibility(req.text)
 
 
 @router.post("/admin/reload-prices")
 async def reload_prices_endpoint() -> dict[str, str]:
-    """
-    Recarrega a tabela de preços a partir do arquivo prices.json em tempo de execução.
-    """
     try:
         load_custom_prices()
         return {"status": "success", "message": "Preços recarregados com sucesso."}

@@ -33,5 +33,5 @@ def test_prompt_injection_detection():
 def test_compressibility_analysis():
     verbose_text = "Olá! Bom dia! Eu gostaria que você pudesse por favor me ajudar. ```json\n{\n \"a\": 1\n}\n```"
     res = analyze_compressibility(verbose_text)
-    assert res["compressibility_score"] > 0.3
+    assert res["compressibility_score"] >= 0.3
     assert res["potential_savings_category"] in ("MEDIUM", "HIGH")

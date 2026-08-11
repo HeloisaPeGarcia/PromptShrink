@@ -3,6 +3,7 @@ Utilitário para extração e proteção de blocos de código markdown.
 
 Garante que transformações de texto (sanitização, compressão, normalização, tradução)
 não alterem ou corrompam trechos de código embutidos.
+Usa um delimitador seguro (@@PROMPTSHRINK_CODE_BLOCK_N@@) que não conflita com regras de markdown.
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ _CODE_BLOCK_PATTERN = re.compile(r"(```[^\n]*\n[\s\S]*?```)")
 
 def protect_code_blocks(text: str) -> tuple[str, list[tuple[str, str]]]:
     """
-    Substitui blocos de código por placeholders únicos.
+    Substitui blocos de código por placeholders únicos imunes a regras de markdown.
 
     Returns:
         tuple[str, list[tuple[str, str]]]: (texto_com_placeholders, lista_de_(placeholder, bloco_original))
@@ -24,7 +25,7 @@ def protect_code_blocks(text: str) -> tuple[str, list[tuple[str, str]]]:
     
     def replacer(match: re.Match) -> str:
         idx = len(placeholders)
-        placeholder = f"__PROMPTSHRINK_CODE_BLOCK_{idx}__"
+        placeholder = f"@@PROMPTSHRINK_CODE_BLOCK_{idx}@@"
         block = match.group(1)
         placeholders.append((placeholder, block))
         return placeholder

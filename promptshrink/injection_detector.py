@@ -11,11 +11,11 @@ import re
 from dataclasses import dataclass, field
 
 _INJECTION_PATTERNS: list[tuple[str, re.Pattern, float]] = [
-    ("IGNORE_INSTRUCTIONS", re.compile(r"\bignore\s+(?:all\s+|previous\s+|prior\s+)?instructions\b", re.IGNORECASE), 0.9),
-    ("FORGET_SYSTEM", re.compile(r"\bforget\s+(?:everything\s+|what\s+)?you\s+(?:know|were\s+told)\b", re.IGNORECASE), 0.8),
-    ("ROLEPLAY_OVERRIDE", re.compile(r"\byou\s+are\s+now\s+(?:a|an)?\s*(?:unrestricted|DAN|jailbroken|evil)\b", re.IGNORECASE), 0.95),
-    ("DISREGARD_RULES", re.compile(r"\bdisregard\s+(?:your\s+|all\s+)?safety\s+rules\b", re.IGNORECASE), 0.85),
-    ("SYSTEM_PROMPT_LEAK", re.compile(r"\bprint\s+(?:your\s+)?system\s+prompt\b", re.IGNORECASE), 0.7),
+    ("IGNORE_INSTRUCTIONS", re.compile(r"\bignore\s+(?:(?:all|previous|prior|system)\s+)*instructions\b", re.IGNORECASE), 0.9),
+    ("FORGET_SYSTEM", re.compile(r"\bforget\s+(?:(?:everything|what|all)\s+)*(?:you\s+)*(?:know|were\s+told|learned)\b", re.IGNORECASE), 0.8),
+    ("ROLEPLAY_OVERRIDE", re.compile(r"\byou\s+are\s+now\s+(?:a|an)?\s*(?:unrestricted|DAN|jailbroken|evil|developer|root)\b", re.IGNORECASE), 0.95),
+    ("DISREGARD_RULES", re.compile(r"\bdisregard\s+(?:(?:your|all|previous|safety)\s+)*rules\b", re.IGNORECASE), 0.85),
+    ("SYSTEM_PROMPT_LEAK", re.compile(r"\b(?:print|show|display|output|reveal)\s+(?:your\s+)?(?:system\s+)?prompt\b", re.IGNORECASE), 0.7),
 ]
 
 

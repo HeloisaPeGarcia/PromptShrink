@@ -1,15 +1,13 @@
 """
-FastAPI application — PromptShrink API (v1).
+FastAPI application — PromptShrink API (v1 + legacy endpoints).
 """
 
 from __future__ import annotations
 
-# pyrefly: ignore [missing-import]
 from fastapi import FastAPI
-# pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes.optimize import router as optimize_router
+from api.routes.optimize import router as optimize_router, legacy_router
 from api.routes.health import router as health_router
 
 app = FastAPI(
@@ -30,3 +28,4 @@ app.add_middleware(
 
 app.include_router(health_router)
 app.include_router(optimize_router)
+app.include_router(legacy_router)

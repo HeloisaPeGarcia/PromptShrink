@@ -14,7 +14,7 @@ from promptshrink.cache_advisor import analyze_prompt_caching
 def test_code_fence_extraction_and_restoration():
     text = 'Texto normal\n```python\nx = "due to the fact that"\n# comentario\n```\nFim'
     protected, blocks = protect_code_blocks(text)
-    assert "__PROMPTSHRINK_CODE_BLOCK_0__" in protected
+    assert "@@PROMPTSHRINK_CODE_BLOCK_0@@" in protected
     assert len(blocks) == 1
     restored = restore_code_blocks(protected, blocks)
     assert restored == text
